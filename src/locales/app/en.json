@@ -1,0 +1,232 @@
+{
+ "startup": {
+  "loading-app": "Loading {{app}}...",
+  "error-restore-view": "Failed to restore a view."
+ },
+ "markdown": {
+  "toggle-callout": "Toggle callout"
+ },
+ "graph": {
+  "canvas-label": "Interactive note graph. Drag nodes or background, scroll to zoom. Use arrow keys to pan, plus and minus to zoom, zero to fit.",
+  "error": "Graph could not start. Notes are available in navigation.",
+  "list-summary": "Graph notes",
+  "error-copy-screenshot": "Failed to copy the graph screenshot."
+ },
+ "sync": {
+  "status-uninitialized": "Uninitialized",
+  "error-unsupported-encryption": "This remote vault uses an encryption version ({{version}}) that is not supported.",
+  "error-incomplete-vault": "The remote vault did not provide the information needed to connect.",
+  "error-invalid-host": "The remote vault reported an invalid Sync server address.",
+  "error-invalid-key": "The Sync encryption key is invalid.",
+  "error-encryption-version": "This remote vault uses an unsupported encryption version.",
+  "error-decrypt": "Could not decrypt remote data.",
+  "initial-transfer-warning": "Connecting to “{{name}}” merges it with this vault. Files deleted remotely are deleted here, and where both sides have a file at the same path the remote copy replaces the local one. Back up important data first.",
+  "status-connecting": "Connecting...",
+  "status-error": "The Sync connection failed.",
+  "transfer-result": "Downloaded {{pulled}}, uploaded {{uploaded}}, removed {{deleted}}; {{conflicts}} conflicts.",
+  "restore-confirmation": "Restore the version of “{{path}}” from {{time}}? This creates a new revision.",
+  "status-synced": "Fully synced",
+  "status-paused": "Paused",
+  "status-connecting-server": "Connecting to server",
+  "status-uploading": "Uploading {{path}}",
+  "status-downloading": "Downloading {{path}}",
+  "log-connected": "Connection successful. Detecting changes...",
+  "log-resumed": "Resumed. Detecting changes...",
+  "log-server-pushed": "Server pushed",
+  "log-uploading-file": "Uploading file",
+  "log-deleting-remote-file": "Deleting remote file",
+  "log-downloading-file": "Downloading file",
+  "log-merge-conflict": "Created a conflict copy"
+ },
+ "settings": {
+  "up-to-date": "You're running the latest version.",
+  "error-save-hotkeys": "Failed to save hotkeys."
+ },
+ "notes": {
+  "error-create-daily": "Failed to create the daily note.",
+  "error-create": "Failed to create the note.",
+  "error-create-unique": "Failed to create the unique note."
+ },
+ "workspaces": {
+  "error-load": "Failed to load the workspace.",
+  "error-open-popout": "Failed to open the popout window."
+ },
+ "audio": {
+  "error-save": "Failed to save the recording."
+ },
+ "account": {
+  "server": "Account server",
+  "server-desc": "Address of the account service to sign in to.",
+  "error-invalid-server": "Enter a valid http or https server address.",
+  "error-unreachable-server": "The account server could not be reached.",
+  "error-server-changed": "The account server changed. Please log in again.",
+  "error-sign-out": "Failed to log out.",
+  "error-mfa-code": "Enter a six-digit authentication code.",
+  "error-not-logged-in": "Please log in.",
+  "error-invalid-response": "The account service returned an invalid response.",
+  "error-request": "Account request failed (HTTP {{status}}).",
+  "error-session": "The account service did not return a valid session.",
+  "error-signin-token": "The account service did not return an authentication token."
+ },
+ "publish": {
+  "error-too-large": "File is larger than the 50 MB upload limit.",
+  "error-file-changed": "The file changed after the list was loaded. Reload the list and try again.",
+  "requires-flag": "Add “publish: true” to this note's properties to publish it."
+ },
+ "search": {
+  "error-invalid-query": "The search query is not valid.",
+  "error-comparison": "{{operator}} operator cannot be applied to matcher {{matcher}}",
+  "error-tag-operand": "Operator \"tag\" can only be followed by text",
+  "error-operator-unknown": "Operator \"{{operator}}\" not recognized",
+  "error-operator-nested": "Operator \"{{operator}}\" cannot be nested within \"{{parent}}\"",
+  "error-property-nested": "Property cannot be nested within a property.",
+  "error-regex": "Failed to parse regular expression. {{message}}",
+  "error-parse": "Failed to parse, error at {{position}} \"{{token}}\"",
+  "label-key": "Key:",
+  "label-value": "Value:"
+ },
+ "bookmarks": {
+  "option-url": "URL",
+  "title-add-many": "Add {{count}} bookmarks"
+ },
+ "canvas": {
+  "png-files": "PNG Files",
+  "all-files": "All Files",
+  "invalid-url": "Invalid URL",
+  "key-scroll": "Scroll",
+  "key-drag": "Drag",
+  "key-click": "Click",
+  "key-drag-to-select": "Drag to select"
+ },
+ "editor": {
+  "error-task-moved": "The task changed in the note. Reopen the note and try again."
+ },
+ "bases": {
+  "new-summary-name": "new summary",
+  "error-block-changed": "The Bases block changed. Reload the note before editing it.",
+  "formula-valid": "Valid formula",
+  "formula-invalid": "Invalid formula",
+  "error-parse-position": "Unable to parse formula. (position {{position}})",
+  "error-regexp-position": "Invalid regular expression (position {{position}}).",
+  "error-function-name-position": "Invalid function name (position {{position}})",
+  "error-parse": "Unable to parse formula.",
+  "error-formula-deserialize": "Formula cannot be deserialized.",
+  "error-unsupported-operator": "This operator is not supported.",
+  "error-invalid-view": "The selected view is invalid.",
+  "error-no-literal": "This value cannot be used as a literal.",
+  "error-number-parse": "Unable to parse \"{{value}}\" as a number.",
+  "error-number-convert": "Unable to convert \"{{type}}\" to a number.",
+  "error-operator": "Invalid operator",
+  "error-date-operator": "Invalid date operator",
+  "error-operator-types": "Invalid operator between {{left}} and {{right}}",
+  "error-negate": "Unable to negate {{value}}",
+  "error-array-index": "Array index must be an integer. Got {{type}}",
+  "error-object-index": "Object access must be a string. Got {{type}}",
+  "error-string-index": "String index must be an integer. Got {{type}}",
+  "operator-not": "not {{function}}",
+  "operators": {
+   "has-property": "has property",
+   "does-not-have-property": "does not have property",
+   "is-empty": "is empty",
+   "is-not-empty": "is not empty",
+   "starts-with": "starts with",
+   "does-not-start-with": "does not start with",
+   "ends-with": "ends with",
+   "does-not-end-with": "does not end with",
+   "contains": "contains",
+   "does-not-contain": "does not contain",
+   "contains-any-of": "contains any of",
+   "does-not-contain-any-of": "does not contain any of",
+   "contains-all-of": "contains all of",
+   "does-not-contain-all-of": "does not contain all of",
+   "matches": "matches",
+   "does-not-match": "does not match",
+   "links-to": "links to",
+   "does-not-link-to": "does not link to",
+   "in-folder": "in folder",
+   "is-not-in-folder": "is not in folder",
+   "has-tag": "has tag",
+   "does-not-have-tag": "does not have tag",
+   "is-exactly": "is exactly",
+   "is-not": "is not",
+   "not-on": "not on",
+   "is-not-exactly": "is not exactly",
+   "on-or-before": "on or before",
+   "on-or-after": "on or after"
+  },
+  "comparisons": {
+   "is": "is",
+   "on": "on",
+   "before": "before",
+   "after": "after"
+  },
+  "summaries": {
+   "average": "Average",
+   "min": "Min",
+   "max": "Max",
+   "sum": "Sum",
+   "range": "Range",
+   "median": "Median",
+   "stddev": "Stddev",
+   "earliest": "Earliest",
+   "latest": "Latest",
+   "checked": "Checked",
+   "unchecked": "Unchecked",
+   "empty": "Empty",
+   "filled": "Filled",
+   "unique": "Unique"
+  }
+ },
+ "diff": {
+  "lines-folded": "{{count}} lines folded"
+ },
+ "web-viewer": {
+  "blank": "Blank",
+  "stored-as": "Stored as \"{{path}}\"",
+  "action-error": "Unable to complete the Web viewer action.",
+  "search-engine-error": "Search engine URL must contain \"%s\""
+ },
+ "mermaid": {
+  "parse-error": "Error parsing Mermaid diagram!\n\n{{message}}"
+ },
+ "menu": {
+  "file": "&File",
+  "edit": "&Edit",
+  "insert": "&Insert",
+  "format": "&Format",
+  "view": "&View",
+  "window": "&Window",
+  "help": "&Help",
+  "redo": "Redo",
+  "actual-size": "Actual Size",
+  "zoom-in": "Zoom In",
+  "zoom-out": "Zoom Out",
+  "toggle-developer-tools": "Toggle Developer Tools",
+  "always-on-top": "Always on Top",
+  "open-help": "Open Help",
+  "homepage": "Homepage",
+  "community": "Community",
+  "help-center": "Help Center",
+  "preferences": "Preferences...",
+  "paste-and-match-style": "Paste and Match Style",
+  "heading-indeterminate": "Indeterminate heading level",
+  "clear-recent": "Clear Recent"
+ },
+ "errors": {
+  "frontmatter-markdown": "Frontmatter can only be processed in a Markdown file.",
+  "frontmatter-mapping": "Frontmatter must be a YAML mapping.",
+  "attachment-filename": "An attachment filename is required.",
+  "link-opening-unavailable": "Link opening is unavailable in this host.",
+  "unresolved-link": "Unable to resolve link: {{linktext}}",
+  "workspace-leaf-unavailable": "No workspace leaf is available.",
+  "file-not-in-vault": "The file does not belong to this vault or is no longer present.",
+  "attachment-not-folder": "Attachment path is not a folder: {{current}}",
+  "copied-item-unavailable": "The copied item could not be loaded.",
+  "parent-folder-missing": "Parent folder does not exist: {{parentPath}}",
+  "invalid-vault-path": "Invalid vault path.",
+  "path-exists": "Path already exists: {{path}}",
+  "path-outside-vault": "Path escapes the vault root.",
+  "relative-vault-path": "Vault paths must be relative.",
+  "properties-mapping": "Properties must be a YAML mapping."
+ }
+}

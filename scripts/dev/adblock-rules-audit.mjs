@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import vm from 'node:vm';
+import { build } from 'esbuild';
+await build({ entryPoints: ['src/runtime/adblock.ts'], bundle: true, platform: 'node', format: 'esm', outfile: 'dist/todo-backup/adblock-check.mjs' });
+const { AdblockRules, AdblockLists } = await import('../../dist/todo-backup/adblock-check.mjs');
+const reference = await fs.readFile('dist/todo-backup/reference-main.js', 'utf8');
+const start = reference.indexOf('var Re=class'), end = reference.indexOf('var z=ue', start);
+assert.ok(start >= 0 && end > start, 'pinned matcher source exists');
+const ReferenceRules = vm.runInNewContext(reference.slice(start, end) + '; Re');
+const rules = ['! Comment', 'banner', '||ads.example^', '|https://start.example', '/ending|', 'prefix*suffix', 'banner^asset', '/regex/', '@@||ads.example^', 'domain##.ad', 'tracker$script', '|both|', '*****'];
+const urls = ['https://site.example/banner', 'https://ads.example/file', 'https://www.ads.example/file', 'https://ads.example.evil/file', 'https://sub.ads.example/file', 'https://start.example/page', 'https://site.example/ending', 'https://site.example/prefix-middle-suffix', 'https://site.example/banner/asset', 'https://site.example/banner-asset', 'https://site.example/tracker', 'https://site.example/regex/', 'https://other.example/', 'https://site.example/?banner=asset', 'https://site.example/Banner', 'both|', 'https://domain.example/ad'];
+let checks = 0;
+for (const list of [...rules, rules.join('\n')]) {
+  const expected = new ReferenceRules(), actual = new AdblockRules();
+  expected.addList(list); actual.addList(list);
+  for (const url of urls) { assert.equal(actual.matches(url), expected.matches(url), JSON.stringify({ list, url })); checks++; }
+}
+const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'obsen-adblock-cache-'));
+let downloads = 0;
+const lists = new AdblockLists(directory, async () => { downloads++; return '||ads.example^'; });
+await lists.update(['https://lists.example/easylist.txt'], 4);
+assert.equal(downloads, 1); assert.equal(lists.rules.matches('https://ads.example/a'), true);
+await lists.update(['https://lists.example/easylist.txt'], 4);
+assert.equal(downloads, 1, 'fresh disk cache avoids network');
+const restarted = new AdblockLists(directory, async () => { throw new Error('Fresh persisted cache must not fetch'); });
+await restarted.update(['https://lists.example/easylist.txt'], 4);
+assert.equal(restarted.rules.matches('https://ads.example/a'), true, 'new loader reads persisted cache');
+const old = new Date(Date.now() - 6 * 86400000);
+await fs.utimes(path.join(directory, 'easylist.txt'), old, old);
+await lists.update(['https://lists.example/easylist.txt'], 0);
+assert.equal(downloads, 1, 'zero interval keeps an old cached list');
+await lists.update(['https://lists.example/easylist.txt'], 4);
+assert.equal(downloads, 2, 'expired list refreshes');
+await lists.update([], 4);
+assert.equal(lists.rules.matches('https://ads.example/a'), false, 'removed lists stop blocking');
+await fs.writeFile('dist/todo-backup/adblock-rules-report.json', JSON.stringify({ checks, cacheChecks: 6, directory }, null, 2));
+console.log(`Adblock audit passed: ${checks} paired rule matches and disk-cache refresh/zero-interval/list-removal checks.`);

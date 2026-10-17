@@ -1,0 +1,190 @@
+syntax = "proto3";
+package obsen.v1;
+
+import "obsen/v1/obsen.proto";
+import "google/protobuf/struct.proto";
+
+// Local administrative IPC only; this service is never exposed on HTTP/Twirp.
+// Each connection starts with bytes 00 4f 42 49 50 43 01 (OBIPC, version 1),
+// followed by 4-byte big-endian length-prefixed AdminRequest/AdminResponse
+// messages, each at most 65536 bytes. Every request carries its own admin key.
+service Administration {
+  rpc Maintenance(EmptyRequest) returns (AdminMaintenanceResponse);
+  rpc Verify(EmptyRequest) returns (AdminVerifyResponse);
+  rpc Backup(AdminBackupRequest) returns (AdminBackupResponse);
+  rpc CreateUser(AdminCreateUserRequest) returns (AdminUser);
+  rpc ListUsers(AdminListUsersRequest) returns (AdminListUsersResponse);
+  rpc AccountOutbox(EmptyRequest) returns (AdminOutboxResponse);
+  rpc AckAccountDelivery(AdminDeliveryRequest) returns (AdminAcknowledgedResponse);
+  rpc IssueBusinessLicense(AdminIssueLicenseRequest) returns (AdminLicenseResponse);
+  rpc RevokeBusinessLicense(AdminRevokeLicenseRequest) returns (AdminRevokedResponse);
+  rpc DisableUser(AdminEmailRequest) returns (AdminSuccessResponse);
+  rpc EnableUser(AdminEmailRequest) returns (AdminSuccessResponse);
+  rpc ResetPassword(AdminResetPasswordRequest) returns (AdminSuccessResponse);
+  rpc EnableMfa(AdminEmailRequest) returns (AdminMfaResponse);
+  rpc DisableMfa(AdminEmailRequest) returns (AdminSuccessResponse);
+  rpc ShareVault(AdminVaultShareRequest) returns (AdminSuccessResponse);
+  rpc UnshareVault(AdminVaultShareRequest) returns (AdminSuccessResponse);
+  rpc ShareSite(AdminSiteShareRequest) returns (AdminSuccessResponse);
+  rpc UnshareSite(AdminSiteShareRequest) returns (AdminSuccessResponse);
+  rpc RevokeToken(AdminTokenRequest) returns (AdminRevokedResponse);
+  rpc RevokeUserTokens(AdminEmailRequest) returns (AdminRevokeUserTokensResponse);
+}
+
+message AdminRequest {
+  string key = 1;
+  oneof operation {
+    EmptyRequest maintenance = 10;
+    EmptyRequest verify = 11;
+    AdminBackupRequest backup = 12;
+    AdminCreateUserRequest create_user = 13;
+    AdminListUsersRequest list_users = 14;
+    EmptyRequest account_outbox = 15;
+    AdminDeliveryRequest ack_account_delivery = 16;
+    AdminIssueLicenseRequest issue_business_license = 17;
+    AdminRevokeLicenseRequest revoke_business_license = 18;
+    AdminEmailRequest disable_user = 19;
+    AdminEmailRequest enable_user = 20;
+    AdminResetPasswordRequest reset_password = 21;
+    AdminEmailRequest enable_mfa = 22;
+    AdminEmailRequest disable_mfa = 23;
+    AdminVaultShareRequest share_vault = 24;
+    AdminVaultShareRequest unshare_vault = 25;
+    AdminSiteShareRequest share_site = 26;
+    AdminSiteShareRequest unshare_site = 27;
+    AdminTokenRequest revoke_token = 28;
+    AdminEmailRequest revoke_user_tokens = 29;
+  }
+}
+message AdminResponse {
+  oneof result {
+    AdminError error = 1;
+    AdminMaintenanceResponse maintenance = 10;
+    AdminVerifyResponse verify = 11;
+    AdminBackupResponse backup = 12;
+    AdminUser created_user = 13;
+    AdminListUsersResponse users = 14;
+    AdminOutboxResponse outbox = 15;
+    AdminAcknowledgedResponse acknowledged = 16;
+    AdminLicenseResponse license = 17;
+    AdminRevokedResponse revoked = 18;
+    AdminSuccessResponse success = 19;
+    AdminMfaResponse mfa = 20;
+    AdminRevokeUserTokensResponse user_tokens = 21;
+  }
+}
+message AdminError {
+  enum Code {
+    CODE_UNSPECIFIED = 0;
+    UNAUTHENTICATED = 1;
+    MALFORMED = 2;
+    INVALID_ARGUMENT = 3;
+    RESOURCE_EXHAUSTED = 4;
+    INTERNAL = 5;
+  }
+  Code code = 1;
+  string message = 2;
+}
+message AdminBackupRequest { string path = 1; }
+message AdminCreateUserRequest {
+  string email = 1;
+  string name = 2;
+  string password = 3;
+}
+message AdminListUsersRequest {
+  optional int64 cursor = 1;
+  optional uint32 limit = 2;
+}
+message AdminDeliveryRequest { string id = 1; }
+message AdminIssueLicenseRequest {
+  string company = 1;
+  uint32 seats = 2;
+  int64 expiry = 3;
+}
+message AdminRevokeLicenseRequest { string license_key = 1 [json_name = "license_key"]; }
+message AdminEmailRequest { string email = 1; }
+message AdminResetPasswordRequest {
+  string email = 1;
+  string password = 2;
+}
+message AdminVaultShareRequest {
+  string vault = 1;
+  string email = 2;
+}
+message AdminSiteShareRequest {
+  string site = 1;
+  string email = 2;
+}
+message AdminTokenRequest { string token = 1; }
+
+message AdminUser {
+  int64 id = 1;
+  string email = 2;
+  string name = 3;
+  bool beta = 4;
+  google.protobuf.Value license = 5;
+}
+message AdminListedUser {
+  int64 id = 1;
+  string email = 2;
+  string name = 3;
+  bool beta = 4;
+  google.protobuf.Value license = 5;
+  bool disabled = 6;
+  bool mfa = 7;
+}
+message AdminListUsersResponse {
+  repeated AdminListedUser users = 1;
+  optional int64 next = 2;
+}
+message AdminMaintenanceResponse {
+  uint64 removed_blobs = 1 [json_name = "removed_blobs"];
+  uint64 removed_uploads = 2 [json_name = "removed_uploads"];
+  uint64 expired_tokens = 3 [json_name = "expired_tokens"];
+  uint64 revisions_before = 4 [json_name = "revisions_before"];
+  uint64 revisions_after = 5 [json_name = "revisions_after"];
+}
+message AdminVerifyResponse {
+  uint64 blobs = 1;
+  uint64 bytes = 2;
+  uint32 schema = 3;
+}
+message AdminBackupResponse {
+  string path = 1;
+  uint64 blobs = 2;
+  uint64 collections = 3;
+  uint32 format = 4;
+}
+message AdminOutboxResponse {
+  repeated AdminDelivery deliveries = 1;
+  uint64 remaining = 2;
+  string delivery = 3;
+}
+message AdminDelivery {
+  string id = 1;
+  string email = 2;
+  string kind = 3;
+  string code = 4;
+  string next = 5;
+  int64 expires = 6;
+  int64 created = 7;
+}
+message AdminAcknowledgedResponse { bool acknowledged = 1; }
+message AdminLicenseResponse {
+  string key = 1;
+  string issuer = 2;
+  int64 expiry = 3;
+  uint32 seats = 4;
+}
+message AdminRevokedResponse { bool revoked = 1; }
+message AdminRevokeUserTokensResponse { uint64 revoked = 1; }
+message AdminSuccessResponse { bool success = 1; }
+message AdminMfaResponse {
+  string secret = 1;
+  string encoding = 2;
+  string authenticator_secret = 3 [json_name = "authenticator_secret"];
+  string authenticator_encoding = 4 [json_name = "authenticator_encoding"];
+  uint32 digits = 5;
+  uint32 period = 6;
+  string algorithm = 7;
+}

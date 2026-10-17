@@ -1,0 +1,4 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
+const archive=process.env.APPDATA+'/obsidian/obsidian-1.14.4.asar',b=fs.readFileSync(archive),header=JSON.parse(b.subarray(16,16+b.readUInt32LE(12)).toString()),base=8+b.readUInt32LE(4);
+function extract(name){let entry=header;for(const part of name.split('/'))entry=entry.files[part];const bytes=b.subarray(base+Number(entry.offset),base+Number(entry.offset)+entry.size);const target=path.join('src/assets',name==='app.css'?'reference-default.css':name);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,bytes);return crypto.createHash('sha256').update(bytes).digest('hex');}
+console.log('app.css',extract('app.css'));const css=fs.readFileSync('assets/obsidian/app.css','utf8');for(const match of css.matchAll(/url\((public\/[^)]+)\)/g)){const name=match[1];console.log(name,extract(name));}

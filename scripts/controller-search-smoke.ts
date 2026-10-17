@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+import { compileSearchQuery } from "../src/controllers/search-query";
+const note={path:"Projects/Alpha.md",name:"Alpha.md",content:'Meeting notes\nred blue\n#project/active\n"quoted phrase"'};
+assert.equal(compileSearchQuery('red blue').test(note),true);
+assert.equal(compileSearchQuery('red green').test(note),false);
+assert.equal(compileSearchQuery('red OR green').test(note),true);
+assert.equal(compileSearchQuery('(red OR green) -yellow').test(note),true);
+assert.equal(compileSearchQuery('path:Projects file:Alpha tag:project/active').test(note),true);
+assert.equal(compileSearchQuery('path:Other OR file:Alpha').test(note),true);
+assert.equal(compileSearchQuery('"quoted phrase"').test(note),true);
+assert.equal(compileSearchQuery('content:/red\\s+blue/').test(note),true);
+assert.equal(compileSearchQuery('RED',true).test(note),false);
+assert.equal(compileSearchQuery('RED').test(note),true);
+assert.equal(compileSearchQuery('-tag:project/active').test(note),false);
+assert.throws(()=>compileSearchQuery('(red OR blue'),/parenthesis/);
+assert.throws(()=>compileSearchQuery('content:/[invalid/'));
+console.log("Controller search smoke passed: operators, grouping, scopes, phrases, regular expressions, exclusions and invalid queries.");

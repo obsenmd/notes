@@ -1,0 +1,12 @@
+[brand]
+original=Obsidian
+translation=Obsen
+
+[setting.about.label-install-version]
+translation=API version: {{version}}
+
+[setting.account.label-email]
+translation=Username
+
+[interface.start-screen.option-user-email]
+translation=Username

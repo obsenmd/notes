@@ -1,0 +1,5 @@
+import fs from 'node:fs/promises';
+import {fixtureClient} from './fixture-client.mjs';
+const report={};
+for(const [name,port,prefix]of[['reference',9686,'obsen-reference-audit-luna-deferred-plugin-'],['obsen',9786,'obsen-electron-smoke-luna-deferred-plugin-']]){const c=await fixtureClient(port,prefix,{separateHistoricalErrors:true,allowPopoutPages:true});try{report[name]=await c.evaluate(`(async()=>{const w=app.workspace,leaf=w.getLeavesOfType('luna-deferred-probe')[0],result={};if(!leaf)return{missingLeaf:true};const snapshot=()=>({deferred:leaf.isDeferred,ctor:leaf.view.constructor.name,opened:window.__lunaDeferredEvents||[],connected:leaf.view.containerEl.isConnected});result.before=snapshot();await leaf.loadIfDeferred();result.afterLoadIfDeferred=snapshot();result.second=await (async()=>{const l=w.getLeavesOfType('luna-deferred-probe')[0];if(l.isDeferred)await w.revealLeaf(l);return snapshot()})();return result})()`);report[name].errors=c.errors;}finally{c.socket.close();}}
+await fs.writeFile('dist/luna-services/deferred-view-lifecycle/inactive-plugin-view.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

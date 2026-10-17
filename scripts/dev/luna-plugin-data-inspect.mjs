@@ -1,0 +1,2 @@
+import {fixtureClient} from './fixture-client.mjs';
+for(const [p,x] of [[10586,'obsen-reference-audit-luna-plugin-data-'],[10596,'obsen-electron-smoke-luna-plugin-data-']]){const c=await fixtureClient(p,x,{waitForApp:true,separateHistoricalErrors:true,allowPopoutPages:true});console.log(p,await c.evaluate(`({modal:document.querySelector('.modal')?.innerText,buttons:[...document.querySelectorAll('.modal button')].map(x=>x.innerText),plugin:!!window.__lunaPluginData,events:window.__lunaExternalSettingsEvents})`));c.socket.close()}

@@ -1,0 +1,12 @@
+import fs from 'node:fs/promises'; import os from 'node:os'; import path from 'node:path'; import {spawn} from 'node:child_process'; import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url), root=process.cwd(), stamp='20261014-'+Date.now();
+for (const item of [{name:'reference',port:10586,prefix:'obsen-reference-audit-luna-plugin-data-',script:'scripts/dev/reference-fixture.cjs'},{name:'obsen',port:10596,prefix:'obsen-electron-smoke-luna-plugin-data-',script:'scripts/dev/startup-fixture.cjs'}]) {
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),item.prefix+stamp+'-')), vault=path.join(directory,'vault'), cfg=path.join(vault,'.obsidian'), plug=path.join(cfg,'plugins','luna-plugin-data-probe');
+ await fs.mkdir(plug,{recursive:true}); await fs.mkdir(path.join(directory,'profile'),{recursive:true}); await fs.writeFile(path.join(vault,'Source.md'),'# Plugin data watcher fixture\n');
+ await fs.writeFile(path.join(cfg,'community-plugins.json'),'["luna-plugin-data-probe"]'); await fs.writeFile(path.join(cfg,'core-plugins.json'),'{}');
+ await fs.writeFile(path.join(plug,'manifest.json'),JSON.stringify({id:'luna-plugin-data-probe',name:'Luna Plugin Data Probe',author:'Luna fixture',version:'1',minAppVersion:'1',description:'Guarded local plugin data watcher test'}));
+ await fs.writeFile(path.join(plug,'main.js'),`const {Plugin}=require('obsidian');module.exports=class extends Plugin{onload(){window.__lunaExternalSettingsEvents=0;window.__lunaPluginData=this;this.onExternalSettingsChange=()=>window.__lunaExternalSettingsEvents++;}}`);
+ const env={...process.env,...(item.name==='reference'?{OBSEN_REFERENCE_FIXTURE:directory,OBSEN_REFERENCE_PORT:String(item.port)}:{OBSEN_STARTUP_FIXTURE:directory,OBSEN_STARTUP_PORT:String(item.port),OBSEN_DIST:path.resolve('dist/luna-services'),ELECTRON_OVERRIDE_DIST_PATH:path.join(os.tmpdir(),'obsen-followups-electron')})}; delete env.ELECTRON_RUN_AS_NODE;
+ const log=await fs.open(path.join(directory,'fixture.log'),'a'),child=spawn(require('electron'),[path.resolve(item.script)],{cwd:root,env,detached:true,windowsHide:true,stdio:['ignore',log.fd,log.fd]});child.unref(); await log.close();
+ await fs.writeFile(path.join(root,'dist/todo-backup',`luna-plugin-data-${item.name}-${item.port}.json`),JSON.stringify({directory,pid:child.pid,port:item.port,archive:item.name==='obsen'?path.resolve('dist/luna-services/app.asar'):undefined},null,2)); console.log(item.name,child.pid,directory);
+}

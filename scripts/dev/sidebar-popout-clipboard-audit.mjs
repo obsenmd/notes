@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import net from 'node:net';
+import {spawn} from 'node:child_process';
+import {createRequire} from 'node:module';
+import {fixtureClient,delay} from './fixture-client.mjs';
+
+const require=createRequire(import.meta.url),root='Popout clipboard audit',report={};
+const freePort=async()=>{const server=net.createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const port=server.address().port;await new Promise(resolve=>server.close(resolve));return port;};
+for(const[name,script,prefix]of [['reference','scripts/dev/reference-fixture.cjs','obsen-reference-audit-'],['obsen','scripts/dev/startup-fixture.cjs','obsen-electron-smoke-']]){
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),prefix+'sidebar-popout-clipboard-')),vault=path.join(directory,'vault'),config=path.join(vault,'.obsidian'),port=await freePort();
+ await fs.mkdir(config,{recursive:true});await fs.mkdir(path.join(directory,'profile'),{recursive:true});await fs.writeFile(path.join(vault,'Source.md'),'# Popout clipboard probe\n');await fs.mkdir(path.join(vault,root,'Source'),{recursive:true});await fs.mkdir(path.join(vault,root,'Target'),{recursive:true});await fs.writeFile(path.join(vault,root,'Source','A.md'),'copied from popout');
+ const workspace={main:{id:'root',type:'split',direction:'vertical',children:[{id:'tabs',type:'tabs',children:[{id:'source',type:'leaf',state:{type:'markdown',state:{file:'Source.md',mode:'preview',source:false}}}]}]},active:'source',lastOpenFiles:[]};
+ for(const[file,value]of Object.entries({'app.json':{},'appearance.json':{},'bookmarks.json':{items:[]},'core-plugins.json':{'daily-notes':false,sync:false},'community-plugins.json':[],'daily-notes.json':{},'types.json':{types:{}},'workspace.json':workspace}))await fs.writeFile(path.join(config,file),JSON.stringify(value));
+ const env={...process.env,OBSEN_STARTUP_FIXTURE:directory,OBSEN_STARTUP_PORT:String(port),OBSEN_REFERENCE_FIXTURE:directory,OBSEN_REFERENCE_PORT:String(port)};delete env.ELECTRON_RUN_AS_NODE;
+ const child=spawn(require('electron'),[path.resolve(script)],{env,windowsHide:true,stdio:['ignore','pipe','pipe']});let log='';child.stdout.on('data',b=>log+=b);child.stderr.on('data',b=>log+=b);let c;
+ try{
+  const deadline=Date.now()+30000;while(Date.now()<deadline){if(child.exitCode!==null)throw Error('Fixture exited: '+log);try{c=await fixtureClient(port,prefix,{waitForApp:true});break;}catch{await delay(150);}}
+  assert.ok(c,'guarded fixture opened');await c.wait('!!app.workspace.layoutReady','layout ready');
+  const ev=c.evaluate;
+  report[name]=await ev(`(async()=>{const ws=app.workspace,root=${JSON.stringify(root)},created=[];app.workspace.leftSplit.expand();let main=ws.getLeavesOfType('file-explorer')[0];if(!main){main=ws.getRightLeaf(false);await main.setViewState({type:'file-explorer'});created.push(main)}await ws.revealLeaf(main);const popLeaf=await ws.openPopoutLeaf({size:{width:820,height:620}});created.push(popLeaf);await popLeaf.setViewState({type:'file-explorer'});const pop=popLeaf.getContainer();await new Promise(resolve=>setTimeout(resolve,1000));const popDoc=popLeaf.view.containerEl.ownerDocument,popRoot=popLeaf.view.containerEl,mainRoot=main.view.containerEl;const row=(base,p)=>[...base.querySelectorAll('.tree-item-self[data-path]')].find(e=>e.dataset.path===p);const rows=base=>[...base.querySelectorAll('.tree-item-self[data-path]')].map(e=>e.dataset.path);for(const base of [mainRoot,popRoot]){for(const p of [root,root+'/Source']){const e=row(base,p);if(e?.parentElement.classList.contains('is-collapsed'))e.querySelector('.collapse-icon')?.click();}}for(let n=0;n<30&&!row(popRoot,root+'/Source/A.md');n++)await new Promise(resolve=>setTimeout(resolve,100));const source=row(popRoot,root+'/Source/A.md');if(!source)return{diagnostic:true,vault:app.vault.getFiles().map(f=>f.path).filter(p=>p.startsWith(root)),views:ws.getLeavesOfType('file-explorer').map(l=>({doc:l.view.containerEl.ownerDocument.URL,rows:rows(l.view.containerEl),text:l.view.containerEl.innerText.slice(0,300)})),popDoc:popDoc.URL,popRows:rows(popRoot),mainRows:rows(mainRoot)};source.click();const nav=popRoot.querySelector('.nav-files-container');const dt=new popDoc.defaultView.DataTransfer();const copy=new popDoc.defaultView.ClipboardEvent('copy',{bubbles:true,cancelable:true,clipboardData:dt});copy.isRelayed=true;nav.dispatchEvent(copy);const payload=dt.getData('obsidian/files')?JSON.parse(dt.getData('obsidian/files')):null;const target=row(mainRoot,root+'/Target');if(!target)throw Error('Main explorer target row missing');target.click();const mainNav=mainRoot.querySelector('.nav-files-container');mainNav.dispatchEvent(new mainRoot.defaultView.ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:dt}));await new Promise(resolve=>setTimeout(resolve,600));const files=app.vault.getFiles().map(f=>f.path).filter(p=>p.startsWith(root+'/')).sort();const copied=await app.vault.read(app.vault.getFileByPath(root+'/Target/A.md')).catch(()=>null);return{sourceWindowIsPopout:popLeaf.view.containerEl.ownerDocument===pop.win.document,payload,files,copied}})()`);
+  report[name].errors=c.errors;
+ }finally{c?.socket.close();child.kill();await fs.writeFile(path.join(directory,'fixture.log'),log);}
+}
+report.differences=JSON.stringify(report.reference)!==JSON.stringify(report.obsen)?{reference:report.reference,obsen:report.obsen}:[];
+await fs.mkdir('dist/todo-backup/sidebar-popout-clipboard-comparison',{recursive:true});await fs.writeFile('dist/todo-backup/sidebar-popout-clipboard-comparison/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+assert.deepEqual(report.differences,[]);assert.deepEqual(report.reference.errors,[]);assert.deepEqual(report.obsen.errors,[]);

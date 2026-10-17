@@ -1,0 +1,531 @@
+syntax = "proto3";
+package obsen.v1;
+
+import "google/protobuf/struct.proto";
+
+// Unary services support Twirp JSON and protobuf. Field names retain the current
+// web API spelling. Never reuse field numbers; use a new package for breaks.
+service Api {
+  rpc Root(EmptyRequest) returns (BodyResponse);
+  rpc Health(EmptyRequest) returns (HealthResponse);
+  rpc LicenseList(TokenRequest) returns (LicenseListResponse);
+  rpc LicenseCreate(LicenseCreateRequest) returns (ManagedLicense);
+  rpc LicenseUpdate(LicenseUpdateRequest) returns (ManagedLicense);
+  rpc LicenseDelete(LicenseDeleteRequest) returns (EmptyResponse);
+  rpc UserBeta(BetaRequest) returns (BetaResponse);
+  rpc StableSiteIndex(SiteIndexRequest) returns (BodyResponse);
+  rpc StableSiteIndexSlash(SiteIndexRequest) returns (BodyResponse);
+  rpc StableSitePage(SitePageRequest) returns (BodyResponse);
+  rpc StableSiteUnlock(UnlockFormRequest) returns (BodyResponse);
+  rpc ReaderPage(SitePageRequest) returns (BodyResponse);
+  rpc UserSignin(SigninRequest) returns (AccountResponse);
+  rpc UserSignup(SignupRequest) returns (EmptyResponse);
+  rpc UserForgetPassword(ForgetPasswordRequest) returns (EmptyResponse);
+  rpc UserResendConfirmation(ConfirmationRequest) returns (EmptyResponse);
+  rpc UserResetPassword(ResetPasswordRequest) returns (EmptyResponse);
+  rpc UserConfirmEmail(AccountCodeRequest) returns (EmptyResponse);
+  rpc UserSignout(TokenRequest) returns (EmptyResponse);
+  rpc UserInfo(TokenRequest) returns (AccountResponse);
+  rpc UserAuthToken(TokenRequest) returns (AccountResponse);
+  rpc SubscriptionList(TokenRequest) returns (SubscriptionResponse);
+  rpc SubscriptionSignupMobile(TokenRequest) returns (SubscriptionResponse);
+  rpc SubscriptionBusiness(BusinessLicenseRequest) returns (BusinessLicenseResponse);
+  rpc Download(FileRequest) returns (BodyResponse);
+  rpc SessionMe(EmptyRequest) returns (AccountResponse);
+  rpc SessionLogout(EmptyRequest) returns (EmptyResponse);
+  rpc VaultRegions(RegionsRequest) returns (RegionsResponse);
+  rpc VaultList(VaultListRequest) returns (VaultListResponse);
+  rpc VaultCreate(VaultCreateRequest) returns (VaultInfo);
+  rpc VaultAccess(VaultAccessRequest) returns (EmptyResponse);
+  rpc VaultDelete(VaultDeleteRequest) returns (EmptyResponse);
+  rpc VaultMigrate(VaultMigrateRequest) returns (VaultInfo);
+  rpc VaultRename(VaultRenameRequest) returns (EmptyResponse);
+  rpc VaultShareList(VaultShareRequest) returns (VaultShareListResponse);
+  rpc VaultShareInvite(VaultShareInviteRequest) returns (EmptyResponse);
+  rpc VaultShareRemove(VaultShareRemoveRequest) returns (EmptyResponse);
+  rpc FileList(FileListRequest) returns (FileListResponse);
+  rpc FileRemove(FileRequest) returns (EmptyResponse);
+  rpc FileUpload(UploadRequest) returns (EmptyResponse);
+  rpc PublishedFile(PublishedFileRequest) returns (BodyResponse);
+  rpc PublishList(TokenRequest) returns (PublishListResponse);
+  rpc PublishCreate(TokenRequest) returns (SiteCreatedResponse);
+  rpc PublishDelete(SiteAccountRequest) returns (EmptyResponse);
+  rpc ShareList(SiteAccountRequest) returns (ShareListResponse);
+  rpc ShareInvite(ShareInviteRequest) returns (ShareInviteResponse);
+  rpc ShareRemove(ShareRemoveRequest) returns (EmptyResponse);
+  rpc ShareAccept(ShareAcceptRequest) returns (EmptyResponse);
+  rpc SiteLookup(SiteLookupRequest) returns (SiteLookupResponse);
+  rpc SlugUpdate(SlugRequest) returns (EmptyResponse);
+  rpc SlugsLookup(SlugsRequest) returns (google.protobuf.Struct);
+  rpc CustomUrl(CustomUrlRequest) returns (CustomUrlResponse);
+  rpc SiteOptions(OptionsRequest) returns (google.protobuf.Value);
+  rpc SitePassword(PasswordRequest) returns (PasswordResponse);
+  rpc VisitorOptions(SitePathRequest) returns (google.protobuf.Value);
+  rpc VisitorCache(SignedSiteRequest) returns (google.protobuf.Struct);
+  rpc VisitorAccess(AccessRequest) returns (BodyResponse);
+  rpc VisitorUnlock(UnlockRequest) returns (UnlockResponse);
+  rpc VisitorFormUnlock(UnlockFormRequest) returns (BodyResponse);
+  rpc VisitorSearch(SearchRequest) returns (SearchResponse);
+  rpc SiteIndex(SiteIndexRequest) returns (BodyResponse);
+  rpc SiteIndexSlash(SiteIndexRequest) returns (BodyResponse);
+  rpc SitePage(SitePageRequest) returns (BodyResponse);
+  rpc FrontendIndex(SiteIndexRequest) returns (BodyResponse);
+  rpc FrontendPage(SitePageRequest) returns (BodyResponse);
+}
+
+message HealthResponse {
+  string status = 1 [json_name = "status"];
+}
+
+message SigninRequest {
+  string email = 1 [json_name = "email"];
+  string password = 2 [json_name = "password"];
+  string mfa = 3 [json_name = "mfa"];
+}
+
+message SignupRequest {
+  string email = 1 [json_name = "email"];
+  string name = 2 [json_name = "name"];
+  string password = 3 [json_name = "password"];
+  optional string next = 4 [json_name = "next"];
+}
+
+message ForgetPasswordRequest {
+  string email = 1 [json_name = "email"];
+  string captcha = 2 [json_name = "captcha"];
+}
+
+message ConfirmationRequest {
+  string email = 1 [json_name = "email"];
+  optional string next = 2 [json_name = "next"];
+}
+
+message ResetPasswordRequest {
+  string code = 1 [json_name = "code"];
+  string password = 2 [json_name = "password"];
+}
+
+message AccountCodeRequest {
+  string code = 1 [json_name = "code"];
+}
+
+message BusinessLicenseRequest {
+  string key = 1 [json_name = "key"];
+}
+
+message BusinessLicenseResponse {
+  string company = 1 [json_name = "company"];
+  int64 expiry = 2 [json_name = "expiry"];
+  uint32 seats = 3 [json_name = "seats"];
+}
+
+message LicenseCreateRequest {
+  string token = 1 [json_name = "token"];
+  string name = 2 [json_name = "name"];
+  uint32 seats = 3 [json_name = "seats"];
+  int64 expiry = 4 [json_name = "expiry"];
+}
+
+message LicenseUpdateRequest {
+  string token = 1 [json_name = "token"];
+  string key = 2 [json_name = "key"];
+  string name = 3 [json_name = "name"];
+  uint32 seats = 4 [json_name = "seats"];
+  int64 expiry = 5 [json_name = "expiry"];
+}
+
+message LicenseDeleteRequest {
+  string token = 1 [json_name = "token"];
+  string key = 2 [json_name = "key"];
+}
+
+message ManagedLicense {
+  string key = 1 [json_name = "key"];
+  string name = 2 [json_name = "name"];
+  uint32 seats = 3 [json_name = "seats"];
+  int64 expiry = 4 [json_name = "expiry"];
+  bool revoked = 5 [json_name = "revoked"];
+}
+
+message LicenseListResponse {
+  repeated ManagedLicense licenses = 1 [json_name = "licenses"];
+  uint64 limit = 2 [json_name = "limit"];
+  uint64 active_count = 3 [json_name = "active_count"];
+}
+
+message BetaRequest {
+  string token = 1 [json_name = "token"];
+  optional bool enabled = 2 [json_name = "enabled"];
+}
+
+message BetaResponse {
+  bool enabled = 1 [json_name = "enabled"];
+}
+
+message TokenRequest {
+  string token = 1 [json_name = "token"];
+}
+
+message AccountResponse {
+  bool beta = 1 [json_name = "beta"];
+  int64 id = 2 [json_name = "id"];
+  string email = 3 [json_name = "email"];
+  string name = 4 [json_name = "name"];
+  google.protobuf.Value license = 5 [json_name = "license"];
+  optional string token = 6 [json_name = "token"];
+}
+
+message SubscriptionResponse {
+  bool sync = 1 [json_name = "sync"];
+}
+
+message RegionsRequest {
+  string token = 1 [json_name = "token"];
+  optional string host = 2 [json_name = "host"];
+}
+
+message Region {
+  string value = 1 [json_name = "value"];
+  string name = 2 [json_name = "name"];
+}
+
+message RegionsResponse {
+  repeated Region regions = 1 [json_name = "regions"];
+}
+
+message VaultListRequest {
+  string token = 1 [json_name = "token"];
+  optional int64 supported_encryption_version = 2 [json_name = "supported_encryption_version"];
+}
+
+message VaultCreateRequest {
+  string token = 1 [json_name = "token"];
+  string name = 2 [json_name = "name"];
+  optional string keyhash = 3 [json_name = "keyhash"];
+  optional string salt = 4 [json_name = "salt"];
+  optional string region = 5 [json_name = "region"];
+  optional int64 encryption_version = 6 [json_name = "encryption_version"];
+}
+
+message VaultInfo {
+  string id = 1 [json_name = "id"];
+  string name = 2 [json_name = "name"];
+  string host = 3 [json_name = "host"];
+  string salt = 4 [json_name = "salt"];
+  optional string password = 5 [json_name = "password"];
+  int64 encryption_version = 6 [json_name = "encryption_version"];
+  string region = 7 [json_name = "region"];
+  uint64 size = 8 [json_name = "size"];
+}
+
+message VaultListResponse {
+  repeated VaultInfo vaults = 1 [json_name = "vaults"];
+  repeated VaultInfo shared = 2 [json_name = "shared"];
+  uint64 limit = 3 [json_name = "limit"];
+}
+
+message VaultAccessRequest {
+  string token = 1 [json_name = "token"];
+  string vault_uid = 2 [json_name = "vault_uid"];
+  string keyhash = 3 [json_name = "keyhash"];
+  optional string host = 4 [json_name = "host"];
+  optional int64 encryption_version = 5 [json_name = "encryption_version"];
+}
+
+message VaultMigrateRequest {
+  string token = 1 [json_name = "token"];
+  string vault_uid = 2 [json_name = "vault_uid"];
+  optional string keyhash = 3 [json_name = "keyhash"];
+  optional string salt = 4 [json_name = "salt"];
+  optional string region = 5 [json_name = "region"];
+  int64 encryption_version = 6 [json_name = "encryption_version"];
+}
+
+message VaultRenameRequest {
+  string token = 1 [json_name = "token"];
+  string vault_uid = 2 [json_name = "vault_uid"];
+  string name = 3 [json_name = "name"];
+}
+
+message VaultDeleteRequest {
+  string token = 1 [json_name = "token"];
+  string vault_uid = 2 [json_name = "vault_uid"];
+}
+
+message VaultShareRequest {
+  string token = 1 [json_name = "token"];
+  string vault_uid = 2 [json_name = "vault_uid"];
+}
+
+message VaultShareInviteRequest {
+  string token = 1 [json_name = "token"];
+  string vault_uid = 2 [json_name = "vault_uid"];
+  string email = 3 [json_name = "email"];
+}
+
+message VaultShareRemoveRequest {
+  string token = 1 [json_name = "token"];
+  string vault_uid = 2 [json_name = "vault_uid"];
+  string share_uid = 3 [json_name = "share_uid"];
+}
+
+message VaultShareInfo {
+  string uid = 1 [json_name = "uid"];
+  string email = 2 [json_name = "email"];
+  string name = 3 [json_name = "name"];
+  bool accepted = 4 [json_name = "accepted"];
+}
+
+message VaultShareListResponse {
+  repeated VaultShareInfo shares = 1 [json_name = "shares"];
+}
+
+message FileRequest {
+  string token = 1 [json_name = "token"];
+  string id = 2 [json_name = "id"];
+  string path = 3 [json_name = "path"];
+}
+
+message FileListRequest {
+  string token = 1 [json_name = "token"];
+  string id = 2 [json_name = "id"];
+  optional int64 version = 3 [json_name = "version"];
+}
+
+message FileInfo {
+  string path = 1 [json_name = "path"];
+  string hash = 2 [json_name = "hash"];
+  uint64 size = 3 [json_name = "size"];
+  int64 ctime = 4 [json_name = "ctime"];
+  int64 mtime = 5 [json_name = "mtime"];
+}
+
+message FileListResponse {
+  bool owner = 1 [json_name = "owner"];
+  repeated FileInfo files = 2 [json_name = "files"];
+}
+
+message UploadRequest {
+  string token = 1 [json_name = "token"];
+  string id = 2 [json_name = "id"];
+  string path = 3 [json_name = "path"];
+  string hash = 4 [json_name = "hash"];
+  bytes bytes = 5 [json_name = "bytes"];
+}
+
+message SiteCreatedResponse {
+  string id = 1 [json_name = "id"];
+  string host = 2 [json_name = "host"];
+}
+
+message SiteSummary {
+  string id = 1 [json_name = "id"];
+  string host = 2 [json_name = "host"];
+  optional string share_uid = 3 [json_name = "share_uid"];
+}
+
+message PublishListResponse {
+  repeated SiteSummary sites = 1 [json_name = "sites"];
+  repeated SiteSummary shared = 2 [json_name = "shared"];
+  uint64 limit = 3 [json_name = "limit"];
+}
+
+message SiteAccountRequest {
+  string token = 1 [json_name = "token"];
+  string site_uid = 2 [json_name = "site_uid"];
+}
+
+message ShareInviteRequest {
+  string token = 1 [json_name = "token"];
+  string site_uid = 2 [json_name = "site_uid"];
+  string email = 3 [json_name = "email"];
+}
+
+message ShareInviteResponse {
+  string code = 1 [json_name = "code"];
+  string share_uid = 2 [json_name = "share_uid"];
+}
+
+message ShareRemoveRequest {
+  string token = 1 [json_name = "token"];
+  string site_uid = 2 [json_name = "site_uid"];
+  string share_uid = 3 [json_name = "share_uid"];
+}
+
+message ShareAcceptRequest {
+  string token = 1 [json_name = "token"];
+  string code = 2 [json_name = "code"];
+}
+
+message ShareSummary {
+  string uid = 1 [json_name = "uid"];
+  string email = 2 [json_name = "email"];
+  optional string name = 3 [json_name = "name"];
+  bool accepted = 4 [json_name = "accepted"];
+}
+
+message ShareListResponse {
+  repeated ShareSummary shares = 1 [json_name = "shares"];
+}
+
+message SiteLookupRequest {
+  string slug = 1 [json_name = "slug"];
+  optional string token = 2 [json_name = "token"];
+}
+
+message SiteLookupResponse {
+  string id = 1 [json_name = "id"];
+  string host = 2 [json_name = "host"];
+  string slug = 3 [json_name = "slug"];
+}
+
+message SiteDescriptor {
+  string uid = 1 [json_name = "uid"];
+  string host = 2 [json_name = "host"];
+  string slug = 3 [json_name = "slug"];
+  string status = 4 [json_name = "status"];
+  string customurl = 5 [json_name = "customurl"];
+}
+
+message SlugRequest {
+  string token = 1 [json_name = "token"];
+  string id = 2 [json_name = "id"];
+  string slug = 3 [json_name = "slug"];
+  optional string host = 4 [json_name = "host"];
+}
+
+message SlugsRequest {
+  string token = 1 [json_name = "token"];
+  repeated string ids = 2 [json_name = "ids"];
+}
+
+message CustomUrlRequest {
+  string token = 1 [json_name = "token"];
+  string id = 2 [json_name = "id"];
+  optional string host = 3 [json_name = "host"];
+  optional string url = 4 [json_name = "url"];
+  optional bool redirect = 5 [json_name = "redirect"];
+}
+
+message CustomUrlResponse {
+  string url = 1 [json_name = "url"];
+  bool redirect = 2 [json_name = "redirect"];
+}
+
+message OptionsRequest {
+  string token = 1 [json_name = "token"];
+  string id = 2 [json_name = "id"];
+  optional google.protobuf.Value options = 3 [json_name = "options"];
+}
+
+message PasswordRequest {
+  string token = 1 [json_name = "token"];
+  string id = 2 [json_name = "id"];
+  optional string name = 3 [json_name = "name"];
+  optional string pw = 4 [json_name = "pw"];
+  optional uint64 del = 5 [json_name = "del"];
+}
+
+message PasswordSummary {
+  string name = 1 [json_name = "name"];
+  int64 ts = 2 [json_name = "ts"];
+}
+
+message PasswordResponse {
+  google.protobuf.Value pass = 1 [json_name = "pass"];
+}
+
+message SitePathRequest {
+  string id = 1 [json_name = "id"];
+}
+
+message SignedSiteRequest {
+  string id = 1 [json_name = "id"];
+  optional int64 ts = 2 [json_name = "ts"];
+  optional string sig = 3 [json_name = "sig"];
+}
+
+message AccessRequest {
+  string id = 1 [json_name = "id"];
+  string path = 2 [json_name = "path"];
+  optional int64 ts = 3 [json_name = "ts"];
+  optional string sig = 4 [json_name = "sig"];
+  optional string range = 5 [json_name = "range"];
+  optional string if_none_match = 6 [json_name = "if_none_match"];
+}
+
+message PublishedFileRequest {
+  string slug = 1 [json_name = "slug"];
+  string path = 2 [json_name = "path"];
+  optional int64 ts = 3 [json_name = "ts"];
+  optional string sig = 4 [json_name = "sig"];
+  optional string range = 5 [json_name = "range"];
+  optional string if_none_match = 6 [json_name = "if_none_match"];
+}
+
+message UnlockRequest {
+  string id = 1 [json_name = "id"];
+  string pw = 2 [json_name = "pw"];
+}
+
+message UnlockResponse {
+  string hpw = 1 [json_name = "hpw"];
+}
+
+message UnlockFormRequest {
+  string slug = 1 [json_name = "slug"];
+  string pw = 2 [json_name = "pw"];
+}
+
+message SearchRequest {
+  string id = 1 [json_name = "id"];
+  repeated string query = 2 [json_name = "query"];
+}
+
+message SearchResponse {
+  repeated string results = 1 [json_name = "results"];
+}
+
+message SiteIndexRequest {
+  string slug = 1 [json_name = "slug"];
+  optional string q = 2 [json_name = "q"];
+}
+
+message SitePageRequest {
+  string slug = 1 [json_name = "slug"];
+  string path = 2 [json_name = "path"];
+  optional string q = 3 [json_name = "q"];
+}
+
+message SemanticErrorEnvelope {
+  optional string error = 1 [json_name = "error"];
+  optional string code = 2 [json_name = "code"];
+  optional string message = 3 [json_name = "message"];
+}
+
+message EmptyRequest {}
+message EmptyResponse {}
+
+// Page and file RPCs carry raw content plus its application status and headers.
+message Header {
+  string name = 1;
+  string value = 2;
+}
+message BodyResponse {
+  uint32 status = 1;
+  bytes body = 2;
+  repeated Header headers = 3;
+}
+
+// Sync retains the existing WebSocket protocol.
+
+// The signed gateway preserves the exact signed application envelope. Both
+// protobuf and JSON encodings are authenticated before decoding or dispatch.
+service SelfService {
+  rpc Call(SelfServiceRequest) returns (google.protobuf.Value);
+}
+message SelfServiceRequest {
+  string path = 1;
+  google.protobuf.Value body = 2;
+}
+

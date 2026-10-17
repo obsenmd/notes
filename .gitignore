@@ -1,0 +1,28 @@
+node_modules/
+dist/
+.obsen/
+.handoff-work/
+graph-sim-wasm/target/
+
+# Proprietary / Obsidian-derived material: never commit
+/reference/obsidian-*/
+/reference/*.asar
+/reference/app-main.cjs
+/reference/obsidian.d.ts
+/reference/obsidian-api-exports.json
+/reference/protocols/
+/reference/comparison/
+/reference/runtime-lock.json
+/assets/obsidian/
+/src/assets/app.css
+/src/assets/public/
+/Audit.png
+/UI-AUDIT.md
+
+# Local work, logs and archives
+*.log
+*.asar
+*.vectorcraft
+.claude/
+/assets/icons/
+/reference/versions.json

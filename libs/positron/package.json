@@ -1,0 +1,29 @@
+{
+  "name": "@obsen/positron",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron API shims for a browser renderer and web worker",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./main": "./main.ts",
+    "./types": "./types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "generate:types": "node scripts/generate-types.mjs"
+  },
+  "dependencies": {
+    "@mozilla/readability": "0.6.0",
+    "comlink": "^4.4.2",
+    "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@electron/docs-parser": "^3.0.2",
+    "@electron/typescript-definitions": "^9.2.0",
+    "electron": "43.7.7",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,8 @@
+import fs from 'node:fs/promises'; import path from 'node:path'; import {fixtureClient,delay} from './fixture-client.mjs';
+const clients=[]; for(const[name,port,prefix]of [['reference',10586,'obsen-reference-audit-luna-plugin-data-'],['obsen',10596,'obsen-electron-smoke-luna-plugin-data-']]) clients.push([name,await fixtureClient(port,prefix,{waitForApp:true,separateHistoricalErrors:true,allowPopoutPages:true})]);
+const result={}; try {
+ for(const[name,c]of clients){ await c.evaluate(`(()=>{const button=[...document.querySelectorAll('.modal button')].find(el=>el.textContent.includes('Trust author and enable plugins')); if(button)button.click(); return Boolean(button)})()`); await c.wait(`window.__lunaPluginData`,'plugin data probe loaded'); await c.evaluate(`window.__lunaPluginData.saveData({source:'plugin'})`); await delay(500); result[name]={afterOwnSave:await c.evaluate(`window.__lunaExternalSettingsEvents`)}; }
+ for(const[name,port]of [['reference',10586],['obsen',10596]]) { const manifest=JSON.parse(await fs.readFile(`dist/todo-backup/luna-plugin-data-${name}-${port}.json`,'utf8')); const data=path.join(manifest.directory,'vault','.obsidian','plugins','luna-plugin-data-probe','data.json'); await fs.writeFile(data,JSON.stringify({source:'external'})); }
+ await delay(900); for(const[name,c]of clients)result[name].afterExternalEdit=await c.evaluate(`window.__lunaExternalSettingsEvents`);
+ await fs.mkdir('dist/luna-services/plugin-api-compat',{recursive:true}); await fs.writeFile('dist/luna-services/plugin-api-compat/external-settings-change-probe.json',JSON.stringify(result,null,2)); console.log(JSON.stringify(result,null,2));
+} finally { for(const[,c]of clients)c.socket.close(); }

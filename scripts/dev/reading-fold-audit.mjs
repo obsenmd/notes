@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';import fs from 'node:fs/promises';import {fixtureClient,delay} from './fixture-client.mjs';
+const file='Fold proof '+Date.now()+'.md',report={},text='# First\n\nFirst body.\n\n## Nested\n\nNested body.\n\n# Second\n\nSecond body.\n\n- Parent\n  - Child\n- Sibling\n\n3. Numbered parent\n   1. Numbered child\n4. Numbered sibling\n';
+for(const [name,port,prefix] of [['reference',9352,'obsen-reference-audit-'],['obsen',9342,'obsen-electron-smoke-']]) {
+ const c=await fixtureClient(port,prefix,{separateHistoricalErrors:true});const ev=c.evaluate;
+ try {
+  await ev(`(async()=>{const p=${JSON.stringify(file)},f=app.vault.getFileByPath(p);if(f)await app.vault.modify(f,${JSON.stringify(text)});else await app.vault.create(p,${JSON.stringify(text)});window.__foldProof={previous:app.workspace.activeLeaf,leaf:app.workspace.getLeaf('tab')};await window.__foldProof.leaf.setViewState({type:'markdown',state:{file:p,mode:'preview'},active:true});window.__foldProof.leaf.containerEl.dataset.foldProof='true';app.workspace.leftSplit.collapse();app.workspace.rightSplit.collapse();})()`);
+  await c.wait(`!!document.querySelector('[data-fold-proof] .el-h1')`,'fold reading');await c.send('Page.captureScreenshot',{format:'png'});await delay(300);
+  const snapshot=()=>ev(`(()=>{const root=document.querySelector('[data-fold-proof] .markdown-preview-section');return [...root.children].filter(e=>e.className!=='markdown-preview-pusher').map(e=>({class:e.className,text:e.textContent,display:getComputedStyle(e).display,height:Math.round(e.getBoundingClientRect().height),heading:e.querySelector('h1,h2')?.className??null,indicator:e.querySelector('.heading-collapse-indicator')?.className??null}));})()`);
+  report[name]={before:await snapshot()};
+  const heading='[data-fold-proof] .el-h1 h1';const point=await ev(`(()=>{const r=document.querySelector(${JSON.stringify(heading)}).getBoundingClientRect();return {x:r.x+1,y:r.y+r.height/2};})()`);await c.send('Input.dispatchMouseEvent',{type:'mouseMoved',...point});await delay(100);
+  report[name].indicator=await ev(`(()=>{const e=document.querySelector('[data-fold-proof] .el-h1 .heading-collapse-indicator'),r=e.getBoundingClientRect();return {display:getComputedStyle(e).display,width:r.width,height:r.height};})()`);
+  await c.click('[data-fold-proof] .el-h1 .heading-collapse-indicator');await delay(250);report[name].collapsed=await snapshot();
+  await c.click('[data-fold-proof] .el-h1 .heading-collapse-indicator');await delay(250);report[name].expanded=await snapshot();const li=()=>ev(`(()=>{const e=document.querySelector('[data-fold-proof] .el-ul li');const outline=n=>n.nodeType===1?{tag:n.tagName,attrs:Object.fromEntries([...n.attributes].map(a=>[a.name,a.value]).sort(([a],[b])=>a.localeCompare(b))),children:[...n.childNodes].map(outline)}:{text:n.textContent};return {class:e.className,outline:outline(e),nestedDisplay:getComputedStyle(e.querySelector('ul,ol')).display};})()`);
+  report[name].listBefore=await li();await c.click('[data-fold-proof] .list-collapse-indicator');await delay(150);report[name].listCollapsed=await li();await c.click('[data-fold-proof] .list-collapse-indicator');await delay(150);report[name].listExpanded=await li();
+  const ordered=()=>ev(`(()=>{const e=document.querySelector('[data-fold-proof] .el-ol li');return {class:e.className,text:e.textContent,indicator:e.querySelector(':scope > .list-collapse-indicator')?.className??null,nestedDisplay:getComputedStyle(e.querySelector('ol')).display};})()`);
+  report[name].orderedBefore=await ordered();await c.click('[data-fold-proof] .el-ol .list-collapse-indicator');await delay(150);report[name].orderedCollapsed=await ordered();await c.click('[data-fold-proof] .el-ol .list-collapse-indicator');await delay(150);report[name].orderedExpanded=await ordered();
+  await c.click('[data-fold-proof] .el-h2 .heading-collapse-indicator');await delay(150);report[name].nestedCollapsed=await snapshot();
+  await c.click('[data-fold-proof] .el-h1 .heading-collapse-indicator');await delay(150);report[name].outerWithNestedCollapsed=await snapshot();
+  await c.click('[data-fold-proof] .el-h1 .heading-collapse-indicator');await delay(150);report[name].nestedRestored=await snapshot();
+  await c.click('[data-fold-proof] .el-h2 .heading-collapse-indicator');await delay(150);report[name].nestedExpanded=await snapshot();
+  const alt=await ev(`(()=>{const r=document.querySelector('[data-fold-proof] .el-h1 .heading-collapse-indicator').getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};})()`);for(const type of ['mousePressed','mouseReleased'])await c.send('Input.dispatchMouseEvent',{type,...alt,button:'left',clickCount:1,modifiers:1});await delay(150);report[name].altCollapsed=await snapshot();
+  await delay(350);
+  report[name].foldInfo=await ev(`window.__foldProof.leaf.view.previewMode.getFoldInfo()`);
+  report[name].stored=await ev(`app.loadLocalStorage('note-fold-'+window.__foldProof.leaf.view.file.path)`);
+  await ev(`window.__foldProof.leaf.view.previewMode.rerender(true)`);await delay(500);report[name].rerendered=await snapshot();
+  await ev(`(async()=>{const s=window.__foldProof;const old=s.leaf;s.leaf=app.workspace.getLeaf('tab');old.detach();await s.leaf.setViewState({type:'markdown',state:{file:${JSON.stringify(file)},mode:'preview'},active:true});s.leaf.containerEl.dataset.foldProof='true';})()`);await delay(500);report[name].reopened=await snapshot();
+  await c.click('[data-fold-proof] .el-h1 .heading-collapse-indicator');await delay(150);
+  await c.click('[data-fold-proof] .el-ul .list-collapse-indicator');await c.click('[data-fold-proof] .el-ol .list-collapse-indicator');await delay(350);
+  report[name].listStored=await ev(`app.loadLocalStorage('note-fold-'+window.__foldProof.leaf.view.file.path)`);
+  report[name].listFoldInfo=await ev(`window.__foldProof.leaf.view.previewMode.getFoldInfo()`);
+  await ev(`window.__foldProof.leaf.view.previewMode.rerender(true)`);await delay(350);report[name].listRerendered=await li();report[name].orderedRerendered=await ordered();
+  await c.click('[data-fold-proof] .el-h1 .heading-collapse-indicator');await delay(200);
+  await ev(`window.__foldProof.leaf.setViewState({type:'markdown',state:{file:window.__foldProof.leaf.view.file.path,mode:'source'},active:true})`);await delay(350);report[name].sourceFoldInfo=await ev(`window.__foldProof.leaf.view.editMode.getFoldInfo()`);
+  await ev(`window.__foldProof.leaf.setViewState({type:'markdown',state:{file:window.__foldProof.leaf.view.file.path,mode:'preview'},active:true})`);await delay(350);report[name].modeRestored=await snapshot();
+  await ev(`(async()=>{const s=window.__foldProof,old=s.leaf;s.leaf=app.workspace.getLeaf('tab');await s.leaf.setViewState({type:'markdown',state:{file:${JSON.stringify(file)},mode:'source'},active:true});s.leaf.containerEl.dataset.foldProof='true';old.detach();})()`);await delay(350);report[name].sourceReopened=await ev(`window.__foldProof.leaf.view.editMode.getFoldInfo()`);
+  await ev(`app.fileManager.renameFile(window.__foldProof.leaf.view.file,${JSON.stringify(file.replace('.md',' renamed.md'))})`);await delay(350);report[name].renameFoldState=await ev(`({old:app.loadLocalStorage('note-fold-'+${JSON.stringify(file)}),renamed:app.loadLocalStorage('note-fold-'+window.__foldProof.leaf.view.file.path),folds:window.__foldProof.leaf.view.editMode.getFoldInfo()})`);
+  report[name].errors=c.errors;
+ } finally {await ev(`(()=>{const s=window.__foldProof;if(s){if(s.previous?.parent){s.leaf.detach();app.workspace.setActiveLeaf(s.previous);}else void s.leaf.setViewState({type:'empty',state:{}});}delete window.__foldProof;})()`).catch(()=>{});c.socket.close();}
+}
+await fs.mkdir('dist/todo-backup/reading-fold-comparison',{recursive:true});await fs.writeFile('dist/todo-backup/reading-fold-comparison/report.json',JSON.stringify(report,null,2));assert.deepEqual(report.obsen,report.reference);console.log('Paired reading heading/list folding checks passed.');
