@@ -15,11 +15,15 @@ await fs.rm(output, { recursive: true, force: true });
 await fs.mkdir(output, { recursive: true });
 // Explicit resolution keeps builds inside the workspace in restricted environments.
 const sources = { name: 'source-files', setup(builder) {
+  const nodeRequire = builder.initialOptions.format === 'esm' && builder.initialOptions.platform === 'browser';
   builder.onResolve({ filter: /.*/ }, async args => {
     // CSS resources are copied intact with the versioned assets below. Preserve
     // embedded data URLs and relative public/font paths for the renderer.
     if (args.kind === 'url-token') return { path: args.path, external: true };
-    if (args.path === 'electron' || args.path === 'original-fs' || args.path.startsWith('node:') || builtinModules.includes(args.path)) return { path: args.path, external: true };
+    if (args.path === 'electron' || args.path === 'original-fs' || args.path.startsWith('node:') || builtinModules.includes(args.path)) {
+      // A browser ESM bundle cannot import these; the renderer has Node integration, so read them with require().
+      return nodeRequire && args.namespace !== 'node-require' ? { path: args.path, namespace: 'node-require' } : { path: args.path, external: true };
+    }
     let filename;
     if (args.path.startsWith('.') || path.isAbsolute(args.path)) {
       const candidate = path.resolve(args.resolveDir || root, args.path);
@@ -30,6 +34,7 @@ const sources = { name: 'source-files', setup(builder) {
     if (!filename) throw new Error(`Cannot resolve ${args.path} from ${args.resolveDir}`);
     return { path: filename, namespace: 'source' };
   });
+  builder.onLoad({ filter: /.*/, namespace: 'node-require' }, args => ({ contents: `module.exports = require(${JSON.stringify(args.path)});`, loader: 'js' }));
   builder.onLoad({ filter: /.*/, namespace: 'source' }, async args => {
     let contents = await fs.readFile(args.path);
     if (args.path === require.resolve('reveal.js')) {
@@ -54,7 +59,8 @@ const common = {
 await Promise.all([
   build({ ...common, entryPoints: ['./src/main.ts'], platform: 'node', format: 'cjs', outfile: path.join(output, 'main.cjs') }),
   build({ ...common, entryPoints: ['./src/preload.ts'], platform: 'node', format: 'cjs', outfile: path.join(output, 'preload.cjs') }),
-  build({ ...common, entryPoints: ['./src/renderer/main.tsx'], platform: 'browser', format: 'iife', define: { 'process.env.NODE_ENV': '"production"' }, outfile: path.join(output, 'renderer.js') }),
+  // ESM with splitting turns dynamic import() (Mermaid, Reveal, Prism, ...) into chunks fetched on first use.
+  build({ ...common, entryPoints: ['./src/renderer/main.tsx'], platform: 'browser', format: 'esm', splitting: true, entryNames: 'renderer', chunkNames: 'chunks/[name]-[hash]', define: { 'process.env.NODE_ENV': '"production"' }, outdir: output }),
   build({ ...common, entryPoints: ['./src/graph/sim.ts'], platform: 'browser', format: 'esm', outfile: path.join(output, 'sim.js') }),
 ]);
 await fs.copyFile(path.join(root, 'src/renderer/index.html'), path.join(output, 'index.html'));
