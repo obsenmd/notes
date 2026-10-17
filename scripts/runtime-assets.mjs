@@ -12,7 +12,13 @@ export async function copyRuntimeAssets(output, { stylesFile } = {}) {
   await fs.copyFile(require.resolve('@mozilla/readability/Readability.js'), path.join(output, 'lib/readability.js'));
   // The code editor uses Monaco's local AMD build so both the browser and the
   // Electron archive load its scripts, styles, fonts and workers without a CDN.
-  await fs.cp(path.dirname(require.resolve('monaco-editor')), path.join(output, 'monaco/vs'), { recursive: true });
+  // The AMD build loads its workers from assets/ (see ts.worker-*.js stubs). language/*/*.worker.js are unused
+  // duplicates, and nls/lang only holds non-English Monaco strings, which this app never selects.
+  const monacoRoot = path.dirname(require.resolve('monaco-editor'));
+  await fs.cp(monacoRoot, path.join(output, 'monaco/vs'), { recursive: true, filter: source => {
+    const relative = path.relative(monacoRoot, source).split(path.sep).join('/');
+    return !/^language\/[^/]+\/[^/]+\.worker\.js$/.test(relative) && !/^nls\/lang\//.test(relative) && !relative.endsWith('.d.ts');
+  } });
   await fs.cp(path.join(root, 'src/assets'), output, { recursive: true });
   await fs.copyFile(path.join(root, 'assets/obsidian/app.css'), path.join(output, 'app.css'));
   await fs.cp(path.join(root, 'assets/obsidian/public'), path.join(output, 'public'), { recursive: true });
